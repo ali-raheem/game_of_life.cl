@@ -7,6 +7,7 @@ from time import time
 
 WIDTH = 1024
 HEIGHT = 1024
+# Actually runs two iterations per count so this 200. This improves contrast (PPM max is still set at 100).
 ITERATIONS = 100
 
 kernelsource = f"""
@@ -94,6 +95,7 @@ for x in range(WIDTH):
 	print()
 	
 f = open("output.ppm", "w")
+# Change ITERATIONS to ITERATIONS * 2 lower constract but technically correct...
 f.write(f"P3\n{WIDTH} {HEIGHT}\n{ITERATIONS}\n")
 for x in range(WIDTH):
 	for y in range(HEIGHT):
