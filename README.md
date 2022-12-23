@@ -19,3 +19,4 @@ Close up
 
 ## Performance
 13.3 seconds on AMD Ryzen 5 2600 (7680 x 4320, 200 iterations).
+0.45 seconds on AMD Radeon 5500 XT 8GB (7680 x 4320, 200 iterations).
