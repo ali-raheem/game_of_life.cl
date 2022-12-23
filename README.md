@@ -3,7 +3,7 @@ OpenCL implementation of Conway's Game of Life, tracks lifetime of cell in opaci
 
 ## Output
 
-![Output converted to PNG(black_white.png)
+![Output converted to PNG](black_white.png)
 
 Running 200 iterations on a 1024x1024 board.
 
