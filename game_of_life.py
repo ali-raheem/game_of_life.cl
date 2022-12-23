@@ -7,28 +7,25 @@ from time import time
 
 WIDTH = 1024
 HEIGHT = 1024
-# Actually runs two iterations per count so this 200. This improves contrast (PPM max is still set at 100).
 ITERATIONS = 100
 
 kernelsource = f"""
-unsigned int index(unsigned int x, unsigned int y, unsigned int w, unsigned int h){{
-//    if (x == -1) x = w-1;
-//    if (y == -1) y = h-1;
+uint index(uint x, uint y, uint w, uint h){{
     x = x % w;
     y = y % h;
     return y * h + x;
 }}
 __kernel void iterate(
-    __global unsigned int *currState,
-    __global unsigned int *nextState){{
-	int x = get_global_id(0);
-	int y = get_global_id(1);
-    int w = get_global_size(0);
-    int h = get_global_size(1);
+    __global uchar *currState,
+    __global uchar *nextState){{
+	uint x = get_global_id(0);
+	uint y = get_global_id(1);
+    uint w = get_global_size(0);
+    uint h = get_global_size(1);
 
-    int i = x + y*h;
-    unsigned int s = currState[i];
-    unsigned int c = !!currState[index(x-1, y-1, w, h)] + !!currState[index(x, y-1, w, h)] + !!currState[index(x+1, y-1, w, h)];
+    uint i = x + y*h;
+    uchar s = currState[i];
+    uchar c = !!currState[index(x-1, y-1, w, h)] + !!currState[index(x, y-1, w, h)] + !!currState[index(x+1, y-1, w, h)];
     c += !!currState[index(x-1, y, w, h)] + !!s + !!currState[index(x+1, y, w, h)];
     c += !!currState[index(x-1, y+1, w, h)] + !!currState[index(x, y+1, w, h)] + !!currState[index(x+1, y+1, w, h)];
     if (c == 3) {{
@@ -39,7 +36,6 @@ __kernel void iterate(
         nextState[index(x, y, w, h)] = 0;
     }}
 }}
-
 """
 
 context = cl.create_some_context()
@@ -47,18 +43,8 @@ queue = cl.CommandQueue(context)
 
 program = cl.Program(context, kernelsource).build()
 
-h_a = numpy.random.randint(2, size=WIDTH*HEIGHT, dtype=numpy.uint32)
-#h_a = numpy.zeros(WIDTH*HEIGHT, dtype=numpy.uint32)
-# Glider
-# h_a[0] = 1
-# h_a[1] = 1
-# h_a[2] = 1
-# h_a[2 + WIDTH] = 1
-# h_a[1 + 2 * WIDTH] = 1
-for x in range(WIDTH):
-	for y in range(HEIGHT):
-		print(f" {h_a[y*WIDTH + x]}", end = '')
-	print()
+h_a = numpy.random.randint(2, size=WIDTH*HEIGHT, dtype=numpy.uint8)
+
 h_b = numpy.empty(WIDTH*HEIGHT, dtype=numpy.uint32)
 
 d_a = cl.Buffer(context, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_a)
@@ -68,7 +54,7 @@ rtime = time()
 iter = program.iterate
 iter.set_scalar_arg_dtypes([None, None])
 
-for _ in range(ITERATIONS):
+for _ in range(int(ITERATIONS/2)):
     iter(queue, (WIDTH, HEIGHT), None, d_a, d_b)
     iter(queue, (WIDTH, HEIGHT), None, d_b, d_a)
 
@@ -83,21 +69,14 @@ queue.finish()
 rtime = time() - rtime
 print(f"Unload from accelerator completed in {rtime}s.")
 
-for x in range(WIDTH):
-	for y in range(HEIGHT):
-		print(f" {h_a[y*WIDTH + x]}", end = '')
-	print()
 cl.enqueue_copy(queue, h_a, d_b)
 queue.finish()
-for x in range(WIDTH):
-	for y in range(HEIGHT):
-		print(f" {h_a[y*WIDTH + x]}", end = '')
-	print()
-	
-f = open("output.ppm", "w")
-# Change ITERATIONS to ITERATIONS * 2 lower constract but technically correct...
-f.write(f"P3\n{WIDTH} {HEIGHT}\n{ITERATIONS}\n")
-for x in range(WIDTH):
-	for y in range(HEIGHT):
-		f.write(f"{ITERATIONS-h_a[y*WIDTH + x]} {ITERATIONS-h_a[y*WIDTH + x]} {ITERATIONS-h_a[y*WIDTH + x]}\n")
+
+#h_a = numpy.max(h_a) - h_a # Invert for black cells on white field
+h_a = h_a - numpy.min(h_a) # Normalize (and set max in PGM below)
+
+f = open("output.pgm", "w")
+f.write(f"P5\n{WIDTH} {HEIGHT}\n{numpy.max(h_a)}\n")
+h_a.tofile(f)
+
 f.close()
