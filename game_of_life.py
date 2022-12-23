@@ -5,15 +5,15 @@ import random
 
 from time import time
 
-WIDTH = 1024
-HEIGHT = 1024
+WIDTH = 1920*4
+HEIGHT = 1080*4
 ITERATIONS = 100
 
 kernelsource = f"""
 uint index(uint x, uint y, uint w, uint h){{
     x = x % w;
     y = y % h;
-    return y * h + x;
+    return y * w + x;
 }}
 __kernel void iterate(
     __global uchar *currState,
@@ -23,8 +23,7 @@ __kernel void iterate(
     uint w = get_global_size(0);
     uint h = get_global_size(1);
 
-    uint i = x + y*h;
-    uchar s = currState[i];
+    uchar s = currState[index(x, y, w, h)];
     uchar c = !!currState[index(x-1, y-1, w, h)] + !!currState[index(x, y-1, w, h)] + !!currState[index(x+1, y-1, w, h)];
     c += !!currState[index(x-1, y, w, h)] + !!s + !!currState[index(x+1, y, w, h)];
     c += !!currState[index(x-1, y+1, w, h)] + !!currState[index(x, y+1, w, h)] + !!currState[index(x+1, y+1, w, h)];
