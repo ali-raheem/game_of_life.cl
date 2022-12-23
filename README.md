@@ -15,4 +15,4 @@ You can also invert output.
 
 Close up
 
-![Close up of output](output.png)
+![Close up of output](closeup.png)
