@@ -16,3 +16,6 @@ You can also invert output.
 Close up
 
 ![Close up of output](closeup.png)
+
+## Performance
+7 seconds on AMD Ryzen 5 2600 (7680 x 4320, 200 iterations).
