@@ -5,8 +5,8 @@ import random
 
 from time import time
 
-WIDTH = 1920*4
-HEIGHT = 1080*4
+WIDTH = 4096*2
+HEIGHT = 2160*2
 ITERATIONS = 100
 
 kernelsource = f"""
@@ -16,7 +16,7 @@ uint index(uint x, uint y, uint w, uint h){{
     return y * w + x;
 }}
 __kernel void iterate(
-    __global uchar *currState,
+    __constant uchar *currState,
     __global uchar *nextState){{
 	uint x = get_global_id(0);
 	uint y = get_global_id(1);
@@ -27,13 +27,14 @@ __kernel void iterate(
     uchar c = !!currState[index(x-1, y-1, w, h)] + !!currState[index(x, y-1, w, h)] + !!currState[index(x+1, y-1, w, h)];
     c += !!currState[index(x-1, y, w, h)] + !!s + !!currState[index(x+1, y, w, h)];
     c += !!currState[index(x-1, y+1, w, h)] + !!currState[index(x, y+1, w, h)] + !!currState[index(x+1, y+1, w, h)];
-    if (c == 3) {{
-        nextState[index(x, y, w, h)] = s + 1;
-    }}else if (c == 4) {{
-        nextState[index(x, y, w, h)] = s + !!s;
-    }}else {{
-        nextState[index(x, y, w, h)] = 0;
-    }}
+    nextState[index(x, y, w, h)] = (uchar)(c==3) * (s + 1) + (uchar)(c == 4) * (s + !!s);
+//    if (c == 3) {{
+//        nextState[index(x, y, w, h)] = s + 1;
+//    }}else if (c == 4) {{
+//        nextState[index(x, y, w, h)] = s + !!s;
+//    }}else {{
+//        nextState[index(x, y, w, h)] = 0;
+//    }}
 }}
 """
 
