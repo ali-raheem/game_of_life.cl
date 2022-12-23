@@ -5,9 +5,9 @@ import random
 
 from time import time
 
-WIDTH = 4096*2
-HEIGHT = 2160*2
-ITERATIONS = 100
+WIDTH = 7680 
+HEIGHT = 4320
+ITERATIONS = 200
 
 kernelsource = f"""
 uint index(uint x, uint y, uint w, uint h){{
